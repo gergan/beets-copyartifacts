@@ -61,10 +61,9 @@ class CopyArtifactsPlugin(BeetsPlugin):
 
         # Get template funcs and evaluate against mapping
         funcs = DefaultTemplateFunctions().functions()
-        file_path = subpath_tmpl.substitute(mapping, funcs) + file_ext
+        file_path = subpath_tmpl.substitute(mapping, funcs)
 
         # Sanitize filename
-        filename = beets.util.sanitize_path(os.path.basename(file_path))
         dirname = os.path.dirname(file_path)
         file_path = os.path.join(dirname, filename)
 
@@ -106,7 +105,9 @@ class CopyArtifactsPlugin(BeetsPlugin):
         non_handled_files = []
         for root, dirs, files in beets.util.sorted_walk(
                     source_path, ignore=config['ignore'].as_str_seq()):
+            root = root.decode('utf-8')
             for filename in files:
+                filename = filename.decode('utf-8')
                 source_file = os.path.join(root, filename)
 
                 # Skip any files extensions handled by beets
@@ -122,7 +123,7 @@ class CopyArtifactsPlugin(BeetsPlugin):
         }])
         self._dirs_seen.extend([source_path])
 
-    def process_events(self):
+    def process_events(self, lib):
         for item in self._process_queue:
             self.process_artifacts(item['files'], item['mapping'], False)
 
@@ -158,9 +159,9 @@ class CopyArtifactsPlugin(BeetsPlugin):
                 ignored_files.append(source_file)
                 continue
 
+            dest_file = beets.util.bytestring_path(dest_file)
             dest_file = beets.util.unique_path(dest_file)
             beets.util.mkdirall(dest_file)
-            dest_file = beets.util.bytestring_path(dest_file)
 
             # TODO: detect if beets was called with 'move' and override config
             # option here
